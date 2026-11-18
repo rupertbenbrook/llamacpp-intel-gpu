@@ -50,13 +50,13 @@ For other projects, copy the `providers.llamacpp` entry into your **global** `~/
 
 ### Change model or server settings
 
-Copy `.env.example` to `.env` and change `HF_MODEL`, `MODEL_ALIAS` and `CTX_SIZE` there. Compose's other tunables have defaults in `compose.yml` and can be overridden in `.env` as well. Apply changes with `docker compose up -d` (or include both `-f` flags when using the GHCR image). For private/gated Hugging Face models, pass `HF_TOKEN` to the container securely; don't commit your token.
+Copy `.env.example` to `.env` and change `HF_MODEL`, `MODEL_ALIAS` and `CTX_SIZE` there. The included OpenCode config advertises 128k for the 9B model; update it if you change the context. Compose's other tunables have defaults in `compose.yml` and can be overridden in `.env` as well. Apply changes with `docker compose up -d` (or include both `-f` flags when using the GHCR image). For private/gated Hugging Face models, pass `HF_TOKEN` to the container securely; don't commit your token.
 
-To serve an existing GGUF from the `models` volume, set `MODEL_FILE=/models/path/to/file.gguf`; it overrides the Hugging Face model. The `Q4_K_M` default, `UBATCH_SIZE=1024`, `PARALLEL=1` and `CACHE_RAM=8192` are based on tests on the machine above. Set `REASONING_BUDGET=0` to favour speed on simple tasks; this may reduce quality on more involved coding tasks.
+To serve an existing GGUF from the `models` volume, set `MODEL_FILE=/models/path/to/file.gguf`; it overrides the Hugging Face model. The `Q4_K_M` default, `UBATCH_SIZE=1024`, `PARALLEL=1`, `CACHE_RAM=8192` and `CACHE_TYPE_K/V=q8_0` are based on tests on the machine above. Set `REASONING_BUDGET=0` to favour speed on simple tasks; this may reduce quality on more involved coding tasks.
 
 ### Context and memory
 
-The tested 9B model uses a 32k-token context by default. A model's advertised context length is **not** a guarantee it will run quickly or fit in memory at that size. Docker's WSL2 VM and the integrated GPU share the host's RAM. A 35B-A3B MoE experiment ran with 128k context at `Q4_K_M`, but became impractically slow when layers spilled to the CPU. An `IQ3_M` version at 64k improved prompt reading yet generated only ~2.7 tokens/s. Neither is the recommended default. See [`bench/README.md`](bench/README.md).
+The 9B model defaults to a **128k-token context** with `q8_0` KV cache on this machine. At 128k the model completed a two-turn server benchmark and all four OpenCode tasks (4/4) without crashes. A short 8k-token prompt took ~90 s to process on a cold cache and subsequent turns reused the prefix. This does **not** verify a fully filled 128k-token prompt: performance and memory use can change as the context fills. Set `CTX_SIZE=65536` or `32768` if you need more memory headroom, and update the matching `limit.context` in `opencode.json`. Docker's WSL2 VM and the integrated GPU share host RAM. The 35B-A3B MoE experiments were substantially slower and are not recommended; see [`bench/README.md`](bench/README.md).
 
 ## Images and CI
 

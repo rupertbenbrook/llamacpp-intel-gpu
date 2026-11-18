@@ -34,7 +34,7 @@ To keep a setting permanently, change its default in `compose.yml`.
 | Flash attention on | pp ≈ same, tg 9.0 → 8.1 t/s | No (off) |
 | ubatch 512 → 1024 | pp +4% (92 → 96 t/s) | Yes |
 | GGML_SYCL_DISABLE_OPT / _GRAPH | no gain / slower | No |
-| KV cache q8_0 | slightly slower | No (use only to save memory) |
+| KV cache q8_0 | 32k raw bench slightly slower; 128k server bench roughly equal, ~1.5 GB less GPU shared memory than f16 | Yes for 128k |
 | Quant Q8_0 / Q4_0 vs Q4_K_M | tg 5.5 / 4.4 vs 9.2 t/s | Q4_K_M |
 | GPU vs CPU-only | pp 1.6x, tg 5x faster on GPU | GPU |
 | `CACHE_RAM=8192` | new opencode sessions reuse the cached ~6k-token prompt: 4 tasks 8.0 → 4.5 min | Yes |
@@ -42,6 +42,7 @@ To keep a setting permanently, change its default in `compose.yml`.
 
 ## Notes
 - opencode's real system prompt is about 6k tokens, so prompt-processing speed and cache reuse matter more than generation speed.
-- A 35B MoE model is also under test. Forcing all layers onto the GPU caused an out-of-memory crash. At Q4_K_M/128k with automatic fitting and a 3 GB safety margin it was stable but **impractically slow**: 7.4 prompt tokens/s and 0.64–2.1 generated tokens/s (versus ~75/~9 for the 9B), with 8.5 GB of Docker memory and 16.4 GB of GPU-shared memory used. Smaller quantisations are being investigated. The 9B benchmarks above are not transferable to the 35B model.
+- **9B context tests** (all on ~8k-token prompts): 64k f16 KV: 84.7 prompt / 8.2 generation t/s; 128k f16: 86.7 / 7.5; 128k q8_0: 89.8 / 8.3; 256k q8_0: 91.5 / 8.6. All stayed running, but these tests do **not** establish that a filled 128k or 256k window fits or performs well. 128k q8_0 passed 4/4 OpenCode tasks in 4.2 minutes. Chosen default: **128k q8_0** (memory headroom over 256k).
+- The 35B MoE experiment is stopped: Q4_K_M/128k with auto fitting ran at 7.4 prompt tokens/s and 0.64–2.1 generated tokens/s; IQ3_M/64k improved to 44.9 prompt and 2.7 generated tokens/s, still too slow for OpenCode.
 - opencode sends a small title-generation request alongside the main one; `PARALLEL` controls whether those run concurrently.
 - Compare runs by `label`; change one setting at a time.

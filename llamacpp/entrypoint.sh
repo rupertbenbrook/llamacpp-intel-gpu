@@ -27,12 +27,12 @@ exec /app/llama-server \
   "$@" \
   --alias "${MODEL_ALIAS:-local-model}" \
   --host 0.0.0.0 --port 8080 \
-  --ctx-size "${CTX_SIZE:-32768}" \
+  --ctx-size "${CTX_SIZE:-131072}" \
   --batch-size "${BATCH_SIZE:-2048}" \
   --ubatch-size "${UBATCH_SIZE:-512}" \
   --flash-attn "${FLASH_ATTN:-auto}" \
-  --cache-type-k "${CACHE_TYPE_K:-f16}" \
-  --cache-type-v "${CACHE_TYPE_V:-f16}" \
+  --cache-type-k "${CACHE_TYPE_K:-q8_0}" \
+  --cache-type-v "${CACHE_TYPE_V:-q8_0}" \
   --parallel "${PARALLEL:-1}" \
   --cache-reuse "${CACHE_REUSE:-0}" \
   --cache-ram "${CACHE_RAM:-0}" \

@@ -10,11 +10,7 @@
       "models": {
         "qwen3.8-9b": {
           "name": "Qwen3.8 9B Distill (local)",
-          "limit": { "context": 32768, "output": 8192 }
-        },
-        "qwen3.8-35b-a3b": {
-          "name": "Qwen3.8 35B-A3B Distill (experimental)",
-          "limit": { "context": 131072, "output": 16384 }
+          "limit": { "context": 131072, "output": 8192 }
         }
       }
     }

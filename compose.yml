@@ -19,13 +19,13 @@ services:
       MODEL_FILE: "${MODEL_FILE:-}"
       MODEL_ALIAS: "${MODEL_ALIAS:-qwen3.8-9b}"
       # --- tuning knobs (defaults can be overridden from the shell or a .env file) ---
-      CTX_SIZE: "${CTX_SIZE:-32768}"
+      CTX_SIZE: "${CTX_SIZE:-131072}"
       GPU_LAYERS: "${GPU_LAYERS:-auto}"        # auto = let llama.cpp fit layers to free GPU memory
       BATCH_SIZE: "${BATCH_SIZE:-2048}"        # -b  logical batch for prompt processing
       UBATCH_SIZE: "${UBATCH_SIZE:-1024}"      # -ub physical batch sent to the GPU (1024 ~4% faster pp than 512)
       FLASH_ATTN: "${FLASH_ATTN:-auto}"        # -fa on|off|auto
-      CACHE_TYPE_K: "${CACHE_TYPE_K:-f16}"     # KV cache precision: f16|q8_0|q4_0
-      CACHE_TYPE_V: "${CACHE_TYPE_V:-f16}"
+      CACHE_TYPE_K: "${CACHE_TYPE_K:-q8_0}"    # q8_0 halves KV memory with little speed change at 128k
+      CACHE_TYPE_V: "${CACHE_TYPE_V:-q8_0}"
       PARALLEL: "${PARALLEL:-1}"               # server slots; 1 = whole context for one session
       CACHE_REUSE: "${CACHE_REUSE:-0}"         # min chunk size for KV-shift prompt reuse (0 = off)
       CACHE_RAM: "${CACHE_RAM:-8192}"          # MiB of host RAM for saved prompt caches; lets new opencode sessions

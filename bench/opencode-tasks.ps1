@@ -7,7 +7,7 @@
 #>
 param(
     [string]$Label = 'run',
-    [string]$Model = 'llamacpp/qwen3.8-35b-a3b',
+    [string]$Model = 'llamacpp/qwen3.8-9b',
     [int]$TimeoutMinutes = 15
 )
 $ErrorActionPreference = 'Stop'
