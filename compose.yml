@@ -1,0 +1,60 @@
+services:
+  llamacpp:
+    build:
+      context: ./llamacpp
+      args:
+        # Intel GPU architecture to compile for (this machine: Arrow Lake-S iGPU, 0x7d67)
+        SYCL_DEVICE_ARCH: arl-s
+        # Xe-LPG iGPUs have no XMX matrix engines; set ON for Arc dGPUs / Lunar Lake+
+        SYCL_SUPPORT_XMX: "OFF"
+        LLAMACPP_REF: "${LLAMACPP_REF:-master}"
+    container_name: llamacpp
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:8080:8080"
+    environment:
+      # Hugging Face model (append :QUANT to choose a specific quantisation, e.g. :Q4_K_M)
+      HF_MODEL: "${HF_MODEL:-empero-ai/Qwen3.8-9B-Distill-GGUF:Q4_K_M}"
+      # Optional: path to a GGUF inside the models volume; overrides HF_MODEL when set
+      MODEL_FILE: "${MODEL_FILE:-}"
+      MODEL_ALIAS: "${MODEL_ALIAS:-qwen3.8-9b}"
+      # --- tuning knobs (defaults can be overridden from the shell or a .env file) ---
+      CTX_SIZE: "${CTX_SIZE:-32768}"
+      GPU_LAYERS: "${GPU_LAYERS:-auto}"        # auto = let llama.cpp fit layers to free GPU memory
+      BATCH_SIZE: "${BATCH_SIZE:-2048}"        # -b  logical batch for prompt processing
+      UBATCH_SIZE: "${UBATCH_SIZE:-1024}"      # -ub physical batch sent to the GPU (1024 ~4% faster pp than 512)
+      FLASH_ATTN: "${FLASH_ATTN:-auto}"        # -fa on|off|auto
+      CACHE_TYPE_K: "${CACHE_TYPE_K:-f16}"     # KV cache precision: f16|q8_0|q4_0
+      CACHE_TYPE_V: "${CACHE_TYPE_V:-f16}"
+      PARALLEL: "${PARALLEL:-1}"               # server slots; 1 = whole context for one session
+      CACHE_REUSE: "${CACHE_REUSE:-0}"         # min chunk size for KV-shift prompt reuse (0 = off)
+      CACHE_RAM: "${CACHE_RAM:-8192}"          # MiB of host RAM for saved prompt caches; lets new opencode sessions
+                                               # reuse the ~6k-token system prompt instead of re-reading it (~2x faster)
+      THREADS: "${THREADS:--1}"                # CPU threads (-1 = auto)
+      N_CPU_MOE: "${N_CPU_MOE:-}"              # MoE models: keep expert weights of the first N layers in CPU RAM
+                                               # (empty = automatic via llama.cpp --fit)
+      REASONING_BUDGET: "${REASONING_BUDGET:--1}"  # -1 = model thinks freely; 0 = no thinking (~30% faster in opencode,
+                                                   # fine for simple edits, may hurt on harder multi-step tasks)
+      EXTRA_ARGS: "${EXTRA_ARGS:-}"
+      GGML_SYCL_DISABLE_OPT: "${GGML_SYCL_DISABLE_OPT:-0}"
+      GGML_SYCL_DISABLE_GRAPH: "${GGML_SYCL_DISABLE_GRAPH:-0}"
+      LLAMA_CACHE: /models
+      # HF_TOKEN: ${HF_TOKEN}   # only needed for gated/private models
+      ZES_ENABLE_SYSMAN: "1"
+      ONEAPI_DEVICE_SELECTOR: "level_zero:0"
+    volumes:
+      - models:/models
+      # Docker Desktop (WSL2) GPU passthrough libraries
+      - /usr/lib/wsl:/usr/lib/wsl:ro
+    devices:
+      - /dev/dxg:/dev/dxg   # WSL2 GPU device (Docker Desktop on Windows)
+      # - /dev/dri:/dev/dri # use this instead on native Linux hosts
+    healthcheck:
+      test: ["CMD", "curl", "-fs", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 5s
+      start_period: 15m   # allow time for the first model download
+      retries: 5
+
+volumes:
+  models:

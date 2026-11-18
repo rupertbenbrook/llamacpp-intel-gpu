@@ -1,0 +1,6 @@
+# Optional overlay: use the image built by GitHub Actions instead of compiling locally.
+# docker compose -f compose.yml -f compose.ghcr.yml up -d
+services:
+  llamacpp:
+    image: ghcr.io/rupertbenbrook/llamacpp-intel-gpu:latest-arl-s
+    build: !reset null

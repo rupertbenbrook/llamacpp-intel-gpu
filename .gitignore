@@ -1,0 +1,14 @@
+# Local settings; copy .env.example and edit locally
+.env
+*.env.local
+# Benchmarks and generated data
+bench/*-results.csv
+bench/fixture/__pycache__/
+*.gguf
+*.gguf.*
+*.safetensors
+*.bin
+*.log
+__pycache__/
+.DS_Store
+Thumbs.db
