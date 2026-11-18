@@ -7,6 +7,7 @@ Three levels of measurement, from fastest to most realistic. Each appends to a C
 | `llama-bench.ps1` | Raw prompt-processing (pp) and generation (tg) tokens/s; sweeps settings | `llama-bench-results.csv` |
 | `server-bench.ps1` | An opencode-shaped exchange: ~6k-token system prompt, then a 2nd turn that should reuse the cache. Time to first token, speeds, memory | `server-results.csv` |
 | `opencode-tasks.ps1` | Real `opencode run` tasks (read, search, edit, bugfix) on a copy of `fixture/`; pass/fail + wall time | `opencode-results.csv` |
+| [`dotnet/run.ps1`](dotnet/README.md) | C# service changes and Dockerfile repair, verified by hidden .NET/HTTP/Docker checks | `dotnet-results.csv` |
 
 ## Changing settings
 

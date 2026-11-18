@@ -71,7 +71,7 @@ The Dockerfile uses upstream llama.cpp `master` by default (so the weekly build 
 
 ## Benchmarks
 
-[`bench/README.md`](bench/README.md) documents the reproducible benchmarks and tuning history. Bench result CSVs and GGUFs are local only and intentionally excluded from Git. The 9B setup was tested via `/v1/chat/completions` and an actual OpenCode tool-use run on the specified machine.
+[`bench/README.md`](bench/README.md) documents the tuning history. [`bench/dotnet/README.md`](bench/dotnet/README.md) adds isolated C#/.NET/Docker coding-agent challenges with hidden verification. Bench result CSVs and GGUFs are local only and intentionally excluded from Git. The 9B setup was tested via `/v1/chat/completions` and real OpenCode tool-use runs on the specified machine.
 
 ## License
 

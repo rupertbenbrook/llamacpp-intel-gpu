@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="src/AgentBench.Core/AgentBench.Core.csproj" />
+  <Project Path="src/AgentBench.Api/AgentBench.Api.csproj" />
+</Solution>

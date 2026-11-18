@@ -3,6 +3,8 @@
 *.env.local
 # Benchmarks and generated data
 bench/*-results.csv
+**/bin/
+**/obj/
 bench/fixture/__pycache__/
 *.gguf
 *.gguf.*
