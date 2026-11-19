@@ -3,6 +3,7 @@
 *.env.local
 # Benchmarks and generated data
 bench/*-results.csv
+bench/dotnet-agent-log/
 **/bin/
 **/obj/
 bench/fixture/__pycache__/

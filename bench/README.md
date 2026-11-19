@@ -14,10 +14,12 @@ Three levels of measurement, from fastest to most realistic. Each appends to a C
 All server settings in `compose.yml` take `${VAR:-default}` values, so a run can override them from the shell without editing files:
 
 ```powershell
-$env:UBATCH_SIZE = 1024; $env:FLASH_ATTN = 'on'
-docker compose up -d                       # recreates the container with the new settings
-./bench/server-bench.ps1 -Label 'ub1024-fa'
-Remove-Item env:UBATCH_SIZE, env:FLASH_ATTN  # back to defaults
+$env:UBATCH_SIZE = '2048'
+docker compose up -d --no-build --force-recreate llamacpp
+./bench/server-bench.ps1 -Label 'ub2048'
+Remove-Item Env:UBATCH_SIZE               # future Compose invocations use .env/defaults
+# Recreate again to restore the running server to those defaults:
+docker compose up -d --no-build --force-recreate llamacpp
 ```
 
 To keep a setting permanently, change its default in `compose.yml`.
@@ -39,11 +41,16 @@ To keep a setting permanently, change its default in `compose.yml`.
 | Quant Q8_0 / Q4_0 vs Q4_K_M | tg 5.5 / 4.4 vs 9.2 t/s | Q4_K_M |
 | GPU vs CPU-only | pp 1.6x, tg 5x faster on GPU | GPU |
 | `CACHE_RAM=8192` | new opencode sessions reuse the cached ~6k-token prompt: 4 tasks 8.0 → 4.5 min | Yes |
-| `REASONING_BUDGET=0` | 4.5 → 3.1 min, 4/4 pass on simple tasks | Optional |
+| `REASONING_BUDGET=0` | Faster in one simple-task run, but the .NET suite passed 7/8 across two runs vs 8/8 with reasoning enabled; one pagination attempt changed the public return type | No for coding default |
+| `PARALLEL=2` with reasoning off | .NET suite 2/4 in 41 min vs 4/4 in 14.9 min on the first single-slot run | No |
+| `UBATCH_SIZE=2048` vs 1024 | Two-turn server benchmark 116.6 vs 115.0 s; prompt 89.5 vs 92.0 t/s | No |
+| 64k vs 128k context | Two-turn server benchmark 115.8 vs 115.0 s; no speed gain and less capacity | No |
 
 ## Notes
 - opencode's real system prompt is about 6k tokens, so prompt-processing speed and cache reuse matter more than generation speed.
 - **9B context tests** (all on ~8k-token prompts): 64k f16 KV: 84.7 prompt / 8.2 generation t/s; 128k f16: 86.7 / 7.5; 128k q8_0: 89.8 / 8.3; 256k q8_0: 91.5 / 8.6. All stayed running, but these tests do **not** establish that a filled 128k or 256k window fits or performs well. 128k q8_0 passed 4/4 OpenCode tasks in 4.2 minutes. Chosen default: **128k q8_0** (memory headroom over 256k).
 - The 35B MoE experiment is stopped: Q4_K_M/128k with auto fitting ran at 7.4 prompt tokens/s and 0.64–2.1 generated tokens/s; IQ3_M/64k improved to 44.9 prompt and 2.7 generated tokens/s, still too slow for OpenCode.
-- opencode sends a small title-generation request alongside the main one; `PARALLEL` controls whether those run concurrently.
-- Compare runs by `label`; change one setting at a time.
+- OpenCode sends a small title-generation request alongside the main one; `PARALLEL` controls whether those run concurrently. Two slots were worse in the tested .NET run, but this alone does not establish why; small-sample agent behavior is noisy.
+- A direct `/v1/chat/completions` prompt-cache test processed 10,010 cold tokens in 109.46 s (~92 t/s); an identical second request reused 10,006 tokens and took 0.56 s. A standalone OpenCode `OK` request took 87.8 s, including ~6,006 prompt tokens processed in 65.2 s. Large, changing tool conversations can consume minutes per request despite a healthy server.
+- The selected defaults remain Q4_K_M, 128k/q8_0, `UBATCH_SIZE=1024`, `PARALLEL=1`, `CACHE_RAM=8192`, and reasoning enabled (`REASONING_BUDGET=-1`). The detailed .NET pass/fail and wall times are in [`dotnet/README.md`](dotnet/README.md); local result CSVs are ignored by Git.
+- Compare runs by `label`; change one setting at a time and require repeated hidden-verifier passes before adopting a tuning.
